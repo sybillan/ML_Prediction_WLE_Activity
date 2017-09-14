@@ -1,0 +1,93 @@
+---
+title: "ML Assignment WLE-Prediction"
+author: "Aarthi"
+date: "9/13/2017"
+output: html_document
+---
+
+
+ 
+The goal of this project will be to identify predictors in the WLE dataset, remove redundant features and to determine the activity specification performed.
+
+The activities are classified as:
+--Exactly according to the specification (Class A) 
+--throwing the elbows to the front (Class B)
+--lifting the dumbbell only halfway (Class C) 
+--lowering the dumbbell only halfway (Class D)
+--throwing the hips to the front (Class E)
+
+# Loading the Training and Test Dataset
+
+```{r}
+library(caret)
+Trainset<-read.csv(url("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"),header = TRUE, na.strings = c("NA", ""), stringsAsFactors = T)
+ 
+ Testset<-read.csv(url("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"),header = TRUE, na.strings = c("NA", ""), stringsAsFactors = T)
+ 
+```
+
+# Checking Correlations
+Dataset can contain attributes that are highly correlated with each other. Prediction methods perform better if highly correlated attributes are removed. A correlation matrix is created from these attributes and highly correlated attributes are identified and removed.
+```{r,include=FALSE,}
+
+#Converting factors to Numeric
+asNumeric <- function(x) as.numeric(as.character(x))
+factorsNumeric <- function(d) modifyList(d, lapply(d[, sapply(d, is.factor)],   
+                                                   asNumeric))
+t<-data.frame(Trainset[,8:160])
+b<-factorsNumeric(t)
+b[is.na(b)]<-0
+```
+
+```{r}
+#Creating Correlation Matrix
+ correlationMatrix <- cor(b, use="pairwise.complete.obs")
+ correlationMatrix[is.na(correlationMatrix)]<-0
+#Identifying Features with cor>0.75)
+ highlyCorrelated <- findCorrelation(correlationMatrix, cutoff=0.75)
+#Printing indexes of highly correlated attributes
+ m<-print(highlyCorrelated)
+```
+
+
+# Creating New Training Set with non-redundant features
+
+Removing Highly Correlated variables, variables with #NA, variables with no variance
+```{r}
+
+ NewTrainSet<-Trainset[,-c(highlyCorrelated)]
+ 
+ library(randomForest)
+library(caret)
+ 
+ columns.to.keep <- colSums(is.na(NewTrainSet)) == 0
+ training <- NewTrainSet[,columns.to.keep]
+ # Remove predictors with almost no variance
+ columns.to.remove <- nearZeroVar(training)
+ training <- training[,-columns.to.remove]
+
+```
+
+# Using randomForest, modeling on training set
+
+```{r}
+
+ model <- randomForest(classe ~ ., data = training, ntree = 300)
+ model
+```
+
+# Variable Importance
+The varImp is used to estimate the variable importance, which is printed and plotted. 
+```{r}
+importance<-varImp(model,scale=FALSE)
+print(importance)
+```
+
+# RESULTS: Predicting on testing set
+
+The test dataset has 20 observations and applying the model to predict the "classe" for each observation.
+```{r}
+ pred<-predict(model,Testset)
+ pred
+```
+
