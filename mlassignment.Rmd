@@ -69,6 +69,7 @@ library(caret)
 ```
 
 # Using randomForest, modeling on training set
+Out-of-bag (OOB) error is a method of measuring the prediction error of random forests. It's the mean prediction error on each training sample xᵢ, using only the trees that did not have xᵢ in their bootstrap sample. The confusion matrix and OOB errors are listed below:
 
 ```{r}
 
@@ -77,7 +78,7 @@ library(caret)
 ```
 
 # Variable Importance
-The varImp is used to estimate the variable importance, which is printed and plotted. 
+The varImp is used to estimate the variable importance of the dataset, which is printed and plotted. 
 ```{r}
 importance<-varImp(model,scale=FALSE)
 print(importance)
